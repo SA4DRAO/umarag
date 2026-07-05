@@ -1,0 +1,64 @@
+{
+  "name": "@sa4drao/umarag",
+  "version": "0.4.0",
+  "description": "Client-side RAG chatbot runtime: on-device retrieval + LLM inference in the browser, zero backend at query time. You ship the vector export, it does the rest.",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "sideEffects": false,
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "build": "node build.js && tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run",
+    "prepublishOnly": "npm test && npm run build"
+  },
+  "keywords": [
+    "rag",
+    "llm",
+    "webgpu",
+    "webllm",
+    "transformers.js",
+    "orama",
+    "on-device",
+    "client-side",
+    "vector-search",
+    "prompt-api",
+    "gemini-nano",
+    "offline-ai"
+  ],
+  "author": "sa4drao",
+  "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  },
+  "peerDependencies": {
+    "@huggingface/transformers": "^3",
+    "@mlc-ai/web-llm": "^0.2",
+    "@orama/orama": "^3"
+  },
+  "peerDependenciesMeta": {
+    "@mlc-ai/web-llm": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@mlc-ai/web-llm": "^0.2",
+    "@orama/orama": "^3",
+    "@types/dom-chromium-ai": "^0.0.17",
+    "esbuild": "^0.28.1",
+    "typescript": "^5.6",
+    "vitest": "^4.1.9"
+  }
+}

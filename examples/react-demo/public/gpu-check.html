@@ -1,0 +1,36 @@
+<!doctype html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>WebGPU check</title>
+<pre id="out" style="white-space:pre-wrap;font:14px/1.5 monospace;padding:1rem"></pre>
+<script>
+const out = document.getElementById("out");
+const log = (s) => (out.textContent += s + "\n");
+(async () => {
+  log("secure context: " + isSecureContext);
+  log("navigator.gpu present: " + !!navigator.gpu);
+  if (!navigator.gpu) return log("VERDICT: WebGPU API not exposed to this page.");
+  try {
+    const adapter = await navigator.gpu.requestAdapter();
+    if (!adapter) return log("VERDICT: requestAdapter() returned null — GPU blocklisted for this origin/profile.");
+    const i = adapter.info ?? {};
+    log("adapter: " + [i.vendor, i.architecture, i.device, i.description].filter(Boolean).join(" | "));
+    log("shader-f16: " + adapter.features.has("shader-f16"));
+    log("maxBufferSize: " + Math.round(adapter.limits.maxBufferSize / 1048576) + " MB");
+    log("maxStorageBufferBindingSize: " + Math.round(adapter.limits.maxStorageBufferBindingSize / 1048576) + " MB");
+    log("features: " + [...adapter.features].join(", "));
+    const device = await adapter.requestDevice({
+      requiredFeatures: adapter.features.has("shader-f16") ? ["shader-f16"] : [],
+    });
+    device.destroy();
+    log("device creation: OK");
+    log(
+      adapter.features.has("shader-f16")
+        ? "VERDICT: WebGPU + shader-f16 OK — gemma q4f16 should run if maxBufferSize covers it."
+        : "VERDICT: WebGPU OK but NO shader-f16 — needs the q4f32 model variant.",
+    );
+  } catch (e) {
+    log("ERROR: " + (e && e.message ? e.name + ": " + e.message : e));
+  }
+})();
+</script>

@@ -1,0 +1,9 @@
+node_modules/
+dist/
+*.log
+*.tgz
+
+examples/react-demo/models/*
+!examples/react-demo/models/README.md
+
+.claude/
