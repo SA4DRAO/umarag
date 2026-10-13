@@ -42,8 +42,8 @@ in the browser.
   Prompt API when present. Engine switching is live; the KB stays loaded.
 - **Embeddings** — `public/kb-export.json`, the `KnowledgeExport` produced by `build-kb`.
 
-Regenerate the knowledge base by editing the markdown in `docs/` and re-running
-`npm run build-kb`.
+Regenerate the knowledge base by editing the repo `README.md`, this README, or the
+markdown in `docs/`, then re-running `npm run build-kb`.
 
 ## Deploying
 

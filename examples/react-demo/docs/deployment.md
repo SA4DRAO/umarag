@@ -17,4 +17,4 @@ Either way the visitor's browser ends up running the same model; only the first 
 
 ## Rebuilding the demo
 
-From the repository root: `npm install` (builds the SDK via the prepare script), then from examples/react-demo: `npm run build-kb` to regenerate the knowledge export from the markdown files in docs/, then `npm run build`. If the umarag SDK source changed, run `npm run build` at the repo root first — the demo consumes the SDK via a local file: link.
+From the repository root: `npm install` (builds the SDK via the prepare script), then from examples/react-demo: `npm run build-kb` to regenerate the knowledge export from the project's own GitHub documentation (the root README, this example's README, and the markdown files in docs/), then `npm run build`. If the umarag SDK source changed, run `npm run build` at the repo root first — the demo consumes the SDK via a local file: link.

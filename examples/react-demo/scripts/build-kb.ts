@@ -1,13 +1,15 @@
 /**
- * Build a `KnowledgeExport` from the project docs in ../docs — the "ship embeddings"
- * step a team runs in CI. Run with: `bun run build-kb`
+ * Build a `KnowledgeExport` from the project's own GitHub documentation — the root
+ * README.md (the repo front page), this example's README.md, and the docs/ set.
+ * This is the "ship embeddings" step a team runs in CI. Run with: `npm run build-kb`
  *
  * This is deliberately outside the umarag package: the package consumes the export,
  * it doesn't produce it. This is one concrete way to produce one: one chunk per
- * `## ` section of each markdown file, ids like "configuration#engine-selection".
+ * `## ` section of each markdown file, ids like "readme#install" or
+ * "docs/getting-started#installation".
  */
 import { pipeline } from "@huggingface/transformers";
-import { mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -23,15 +25,27 @@ const SYSTEM_PROMPT = [
 ].join(" ");
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
+const repoRoot = join(root, "..", "..");
 const docsDir = join(root, "docs");
 
 const slug = (s: string) =>
   s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
 
+// The GitHub documentation surface: repo front-page README, this example's README,
+// and the docs/ set. models/README.md is intentionally excluded (internal weight-store
+// bookkeeping, not user-facing docs).
+const sources: { path: string; base: string }[] = [
+  { path: join(repoRoot, "README.md"), base: "readme" },
+  { path: join(root, "README.md"), base: "demo" },
+  ...readdirSync(docsDir)
+    .filter((f) => f.endsWith(".md"))
+    .sort()
+    .map((f) => ({ path: join(docsDir, f), base: `docs/${f.replace(/\.md$/, "")}` })),
+].filter((s) => existsSync(s.path));
+
 const sections: { id: string; text: string }[] = [];
-for (const file of readdirSync(docsDir).filter((f) => f.endsWith(".md")).sort()) {
-  const base = file.replace(/\.md$/, "");
-  const body = readFileSync(join(docsDir, file), "utf8");
+for (const { path, base } of sources) {
+  const body = readFileSync(path, "utf8");
   // One chunk per `## ` section; the `# ` title line before the first section is dropped.
   for (const match of body.matchAll(/^## (.+)$\n([\s\S]*?)(?=^## |\n*$(?![\s\S]))/gm)) {
     const [, heading, text] = match;
@@ -39,7 +53,7 @@ for (const file of readdirSync(docsDir).filter((f) => f.endsWith(".md")).sort())
     if (clean) sections.push({ id: `${base}#${slug(heading!)}`, text: `${heading!.trim()}: ${clean}` });
   }
 }
-if (sections.length === 0) throw new Error(`no ## sections found under ${docsDir}`);
+if (sections.length === 0) throw new Error(`no ## sections found in sources: ${sources.map((s) => s.path).join(", ")}`);
 
 const embed = await pipeline("feature-extraction", MODEL);
 
