@@ -9,34 +9,14 @@ import { cn } from "@/lib/utils";
 type Status = "idle" | "loading" | "ready" | "error";
 type Message = { role: "user" | "assistant"; content: string; sources?: string[] };
 
+import { MODELS, getAppConfig, pickDefault } from "@/lib/models";
+
 const KNOWLEDGE_URL = "/kb-export.json";
-// Gemma 2 2B served from this origin (see ../models/) — no CDN at LLM load time.
-// Two builds of the same weights: q4f16 for GPUs with shader-f16, q4f32 for the rest.
-const record = (id: string, extra: object) => ({
-  model: `${location.origin}/models/${id}/resolve/main/`,
-  model_id: id,
-  model_lib: `${location.origin}/models/${id.replace("-MLC", "_cs1k-webgpu.wasm")}`,
-  overrides: { context_window_size: 4096 },
-  ...extra,
-});
-const APP_CONFIG = {
-  model_list: [
-    record("gemma-2-2b-it-q4f16_1-MLC", { required_features: ["shader-f16"] }),
-    record("gemma-2-2b-it-q4f32_1-MLC", {}),
-  ],
-};
 
 const MODES: { value: EngineKind; label: string; blurb: string }[] = [
   { value: "auto", label: "Auto", blurb: "picks the best engine for this device" },
-  { value: "webllm", label: "WebLLM", blurb: "Gemma 2 2B over WebGPU (~1.4 GB, cached after first load)" },
+  { value: "webllm", label: "WebLLM", blurb: "a small local LLM over WebGPU (cached after first load)" },
   { value: "prompt-api", label: "Built-in", blurb: "the browser's built-in model (Gemini Nano) — no download" },
-];
-
-// Both entries in APP_CONFIG above. f32 is the workaround for GPUs whose drivers
-// advertise shader-f16 but miscompute it (garbled output on some Android devices).
-const MODELS = [
-  { id: "gemma-2-2b-it-q4f16_1-MLC", label: "Gemma 2 2B · f16", needsF16: true },
-  { id: "gemma-2-2b-it-q4f32_1-MLC", label: "Gemma 2 2B · f32", needsF16: false },
 ];
 
 export function ChatWidget() {
@@ -60,7 +40,7 @@ export function ChatWidget() {
     if (open && !compat) {
       checkCompatibility().then((c) => {
         setCompat(c);
-        setModel(c.shaderF16 ? MODELS[0]!.id : MODELS[1]!.id);
+        setModel(pickDefault(c.shaderF16));
       });
     }
   }, [open, compat]);
@@ -83,16 +63,29 @@ export function ChatWidget() {
             "Safari/iOS: WebGPU ships by default from iOS/iPadOS 26 — update if older.",
         );
       }
-      // A webllm model is always configured, so SDK 'auto' prefers our self-hosted
-      // Gemma and falls back to the built-in Prompt API when WebGPU can't deliver.
+      // A webllm model is always configured, so SDK 'auto' prefers our chosen
+      // model (self-hosted when the origin serves /models, else HuggingFace)
+      // and falls back to the built-in Prompt API when WebGPU can't deliver.
       const chat = new EdgeChat({
         knowledgeUrl: KNOWLEDGE_URL,
         engine,
-        webllmModel: webllmModel || (c.shaderF16 ? MODELS[0]!.id : MODELS[1]!.id),
-        webllmAppConfig: APP_CONFIG,
+        webllmModel: webllmModel || pickDefault(c.shaderF16),
+        webllmAppConfig: await getAppConfig(),
         onProgress: (r) => setProgress({ text: r.text, pct: Math.round(r.progress * 100) }),
       });
-      await chat.init();
+      try {
+        await chat.init();
+      } catch (first) {
+        // A stale/poisoned Cache API entry (e.g. an HTML fallback cached for a
+        // model file that once 404'd) breaks every future load until cleared.
+        // Purge webllm caches and retry once — but only for corruption-shaped
+        // errors; OOM/feature errors would just re-download and fail again.
+        const msg = first instanceof Error ? `${first.name} ${first.message}` : String(first);
+        if (!/JSON|Unexpected token|magic|RangeError|out of bounds|byte length/i.test(msg)) throw first;
+        for (const n of await caches.keys()) if (n.startsWith("webllm")) await caches.delete(n);
+        setProgress({ text: "Load failed on cached data — cleared model cache, retrying…", pct: 0 });
+        await chat.init();
+      }
       chatRef.current = chat;
       setEngine(chat.engineKind);
       setStatus("ready");
@@ -248,7 +241,7 @@ export function ChatWidget() {
           >
             {MODELS.map((m) => (
               <option key={m.id} value={m.id} disabled={m.needsF16 && !compat.shaderF16}>
-                {m.label}
+                {m.label} · {(m.vram / 1024).toFixed(1)} GB
                 {m.needsF16 && !compat.shaderF16 ? " — needs shader-f16" : ""}
               </option>
             ))}

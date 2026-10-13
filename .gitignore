@@ -2,8 +2,18 @@ node_modules/
 dist/
 *.log
 *.tgz
+.vercel/
+.env
 
+# Model weights (~1.4 GB each) are never committed — see examples/react-demo/models/README.md
 examples/react-demo/models/*
 !examples/react-demo/models/README.md
+# public/models is a symlink to the local weight store
+examples/react-demo/public/models
+# personal debug harness, not part of the shipped demo
+examples/react-demo/debug.html
+examples/react-demo/dist/
 
 .claude/
+.vercel
+.env*

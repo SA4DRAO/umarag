@@ -3,7 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { ShieldCheck, Cpu, Database, ServerOff, Lock, Boxes, ArrowDownRight, Package } from "lucide-react";
 
-const INSTALL = "npm install @sa4drao/umarag @orama/orama @huggingface/transformers";
+const INSTALL = "npm install github:SA4DRAO/umarag @orama/orama @huggingface/transformers";
 
 const CLIENT_SNIPPET = `import { EdgeChat, checkCompatibility } from "@sa4drao/umarag";
 
@@ -58,10 +58,10 @@ export default function App() {
             <span className="font-mono text-sm font-bold tracking-tight">umarag</span>
           </div>
           <a
-            href="https://www.npmjs.com/package/@sa4drao/umarag"
+            href="https://github.com/SA4DRAO/umarag"
             className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
           >
-            <Package className="size-4" /> npm
+            <Package className="size-4" /> GitHub
           </a>
         </div>
       </header>
@@ -88,8 +88,8 @@ export default function App() {
 
         <p className="mt-6 inline-flex items-center gap-2 text-sm text-muted-foreground">
           Try the live assistant <ArrowDownRight className="size-4" /> bottom-right — it answers questions
-          about umarag itself, remembers the conversation, and lets you switch engines and models live, with
-          Gemma 2 2B served from this very origin
+          about umarag itself, remembers the conversation, and lets you switch engines and models live.
+          Retrieval, memory and inference all happen in your tab.
         </p>
       </section>
 

@@ -1,0 +1,24 @@
+.git
+.claude
+.vercel
+node_modules
+dist
+*.log
+*.tgz
+
+# 1.4 GB weight store + broken symlink — the deployed demo falls back to
+# WebLLM's HuggingFace registry instead (see src/lib/models.ts)
+examples/react-demo/models
+examples/react-demo/public/models
+
+# local-only tooling, not part of the deployed demo
+examples/react-demo/debug.html
+examples/react-demo/scripts
+examples/react-demo/docs
+examples/react-demo/bun.lock
+
+# library sources Vercel doesn't need (root src/ IS needed — dist is built from it)
+test
+LICENSE
+README.md
+examples/react-demo/README.md

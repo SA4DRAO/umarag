@@ -7,7 +7,7 @@
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
-    "build-kb": "bun run scripts/build-kb.ts"
+    "build-kb": "node scripts/build-kb.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.6.0",

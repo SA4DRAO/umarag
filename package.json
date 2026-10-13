@@ -20,8 +20,10 @@
   },
   "scripts": {
     "build": "node build.js && tsc -p tsconfig.json",
+    "build:demo": "npm run build && npm run build -w umarag-react-demo",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "vitest run",
+    "prepare": "node build.js && tsc -p tsconfig.json",
     "prepublishOnly": "npm test && npm run build"
   },
   "keywords": [
@@ -40,9 +42,19 @@
   ],
   "author": "sa4drao",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/SA4DRAO/umarag.git"
+  },
+  "bugs": {
+    "url": "https://github.com/SA4DRAO/umarag/issues"
+  },
   "publishConfig": {
     "access": "public"
   },
+  "workspaces": [
+    "examples/react-demo"
+  ],
   "peerDependencies": {
     "@huggingface/transformers": "^3",
     "@mlc-ai/web-llm": "^0.2",

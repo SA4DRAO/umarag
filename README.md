@@ -1,15 +1,47 @@
-# @sa4drao/umarag
+# umarag
 
-A client-side RAG chatbot runtime. Zero backend calls at query time: retrieval and LLM generation both run in the end user's browser.
+**Client-side RAG chatbot runtime — on-device retrieval + LLM inference in the browser. Zero backend at query time.**
 
-This package is **consumption-only**. It does not chunk documents, generate embeddings, or run a vector database for you — you already have a pipeline that produces embeddings (or can build one in a few lines with Orama). `umarag` just needs a static JSON file matching the `KnowledgeExport` contract, hosted anywhere reachable by `fetch` (a CDN, a static asset, same-origin — doesn't matter).
+> 🚀 **[Live demo](https://umarag.vercel.app)** — the assistant in the bottom-right answers questions about this SDK, fully on-device.
+
+![umarag demo](docs-assets/hero.png)
+
+You ship a static JSON vector export; `umarag` does the rest — embedding the query, vector search, prompt building, and streaming generation — all inside your user's tab. No inference server, no API keys, no per-token bill, no queries leaving the device.
+
+```ts
+import { EdgeChat } from '@sa4drao/umarag';
+
+const chat = new EdgeChat({ knowledgeUrl: 'https://cdn.acme.com/kb-export.json' });
+await chat.init();
+
+const { sources, stream } = await chat.stream('How do I authenticate?');
+for await (const delta of stream) appendToUI(delta);
+```
+
+## What this package is — and isn't
+
+`umarag` is **consumption-only**. It does not chunk documents, generate embeddings, or run a vector database for you. You already have a pipeline that produces embeddings (or can build one in a few lines with Orama, below). `umarag` just needs a static JSON file matching the `KnowledgeExport` contract, hosted anywhere reachable by `fetch` — a CDN, a static asset, same-origin, doesn't matter.
+
+You ship three things:
+
+| | |
+|---|---|
+| **Guardrails** | A system prompt that pins the assistant to your knowledge base |
+| **Model** | A WebLLM model over WebGPU, or the browser's built-in Prompt API (Gemini Nano) |
+| **Embeddings** | One static `KnowledgeExport` JSON file, hydrated client-side |
 
 ## Install
 
 ```bash
 npm install @sa4drao/umarag @orama/orama @huggingface/transformers
-# optional, only needed if you want the WebLLM fallback engine:
+# optional, only if you want the WebLLM engine:
 npm install @mlc-ai/web-llm
+```
+
+Not on the public registry yet? Install straight from GitHub (a `prepare` script builds `dist/` for you):
+
+```bash
+npm install github:SA4DRAO/umarag @orama/orama @huggingface/transformers
 ```
 
 ## 1. Produce a `KnowledgeExport` (your build pipeline, not this package)
@@ -91,6 +123,8 @@ const compat = await checkCompatibility();
 
 Use it to drive a backend picker UI, choose the right model quantization, or show your own unsupported-device message up front.
 
+![Engine picker](docs-assets/widget.png)
+
 Switch engines on a live instance — the knowledge base and embedder stay loaded:
 
 ```ts
@@ -140,6 +174,20 @@ webllmAppConfig: {
 
 Retrieval is exact/brute-force vector search (via Orama) — fast at hundreds to low thousands of chunks. If your knowledge base is much larger, pre-filter/shard your export (e.g. one export per product area) rather than shipping the whole thing to the browser.
 
+## Development demo
+
+[`examples/react-demo`](examples/react-demo) is a Vite + React marketing page with an embedded docs assistant that dogfoods the SDK: self-hosted Gemma 2 2B over WebGPU, live engine/model switching, streaming answers with source citations. See its [README](examples/react-demo/README.md) to run it locally.
+
+```bash
+npm install          # repo root — builds the SDK (prepare script)
+npm test             # 19 unit tests
+npm run build:demo   # build SDK + demo → examples/react-demo/dist
+```
+
 ## Status
 
-Pre-release / dev phase. Not yet published to npm.
+Pre-release (v0.4). The API surface is stable for evaluation; the `KnowledgeExport` schema is versioned (`schemaVersion: 1`) and mismatches fail loudly. Publishing to npm as `@sa4drao/umarag` is the next step — until then, install from GitHub as shown above.
+
+## License
+
+MIT
