@@ -38,10 +38,11 @@ npm install @sa4drao/umarag @orama/orama @huggingface/transformers
 npm install @mlc-ai/web-llm
 ```
 
-Not on the public registry yet? Install straight from GitHub (a `prepare` script builds `dist/` for you):
+Not on the public registry yet? Install straight from GitHub instead — a `prepare` script builds `dist/` on install, so it resolves like the real package:
 
 ```bash
 npm install github:SA4DRAO/umarag @orama/orama @huggingface/transformers
+# npm 12+ blocks git installs by default — add: --allow-git=all
 ```
 
 ## 1. Produce a `KnowledgeExport` (your build pipeline, not this package)
